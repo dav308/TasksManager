@@ -2,26 +2,23 @@ import React, { useContext, useEffect } from "react"
 import {useAuth} from './auth'
 import { DataContext } from "./DataContext"
 
-const FunctionTasksContext = React.createContext()
+const FunctionTagsContext = React.createContext()
 
-function FunctionTasksProvider({children}){
+function FunctionTagsProvider({children}){
     const auth = useAuth()
-    const { taskValue, setDefault } = useContext(DataContext)
+
     const headers = {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + auth.token,
     }
 
-useEffect(()=>{
-    
-}, [taskValue])
-
-const deleteTask = async (id, callback) => {
+const deleteTags = async (id, callback) => {
     try {
-        const res = await fetch('/api/v1/inbox/your-todos/'+ id, {
+        const res = await fetch('/api/v1/tags/'+ id, {
             method: 'DELETE',
             headers: headers,})
+
         if(res.status > 299){
             throw new Error('Ha ocurrido un error inesperado')
         }
@@ -32,10 +29,10 @@ const deleteTask = async (id, callback) => {
     }      
 }
 
-const editTask = async (body,callback) => {
+const editTags = async (body,callback) => {
     const {id, ...send} = body
     try{
-        const res = await fetch('/api/v1/inbox/your-todos/'+id, {
+        const res = await fetch('/api/v1/tags/'+id, {
             method: 'PUT',
             body: JSON.stringify(send),
             headers: headers})
@@ -51,14 +48,15 @@ const editTask = async (body,callback) => {
     
 }
 
-const createTask = async (body, callback) => {
+const createTags = async (body, callback) => {
     try {
-        const res = await fetch('/api/v1/inbox/your-todos/',{
+        const res = await fetch('/api/v1/tags/',{
             method: 'POST',
-            headers: headers,
-            body:  JSON.stringify(Object.assign(taskValue, body)),
+            headers: headers,//here user
+            body:  JSON.stringify(Object.assign(body)),
         })
         const data = await res.json()
+
         if (res.status > 299){
             throw new Error('Ha ocurrido un error inesperado')
         }else{
@@ -68,15 +66,12 @@ const createTask = async (body, callback) => {
         alert('Error al crear')
         callback()
     }
-	
 }
 
-return <FunctionTasksContext.Provider
-value={{createTask, deleteTask, editTask}}>
+return <FunctionTagsContext.Provider
+value={{createTags, editTags, deleteTags}}>
 				{children}
-</FunctionTasksContext.Provider>
+</FunctionTagsContext.Provider>
 }
 				
-export {FunctionTasksContext, FunctionTasksProvider}
-
-//Object.assign(send, body)
+export {FunctionTagsContext, FunctionTagsProvider}

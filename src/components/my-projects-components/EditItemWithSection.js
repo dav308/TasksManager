@@ -6,12 +6,14 @@ import { ItemsContext } from "../../providers/ItemsContext";
 import { FunctionSectionsContext } from "../../providers/FuntionSeccions.provider";
 import { Options } from "../auxiliar-components/Options";
 import { DataContext } from "../../providers/DataContext";
+import { Tags } from "../inbox-components/Tags";
+import { Recomended } from "../auxiliar-components/Recomended";
 
 function EditItemWithSection ({values, functions}){
-    const {id, content, details, evento, sectionid, folderid, userId, eventId, tasksInSections, orders, notifications} = values
+    const {id, content, details, evento, sectionid, folderid, userId, eventId, myTags, tasksInSections, orders, notifications} = values
   
     const {refreshsections, dispatchSections, setEdit} = functions
-    const {updateAll} = useContext(ItemsContext)
+    const {updateAll, updateWithout} = useContext(ItemsContext)
     const {editTask, deleteTask} = useContext(FunctionTasksContext)
     const {editSection} = useContext(FunctionSectionsContext)
     const {filter} = useContext(DataContext)
@@ -33,11 +35,13 @@ function EditItemWithSection ({values, functions}){
       date: "",
       time: "",
       notifications: notifications,
+      myTags: myTags
   } 
 
 
     const [editValues, setEditValues] = useState(initialValues)
     const [options, setOptions] = useState(initialOptions)    
+    const [recomended, setRecomended] = useState(false)
 
     const sendEdit = () => {
       const newTask = {
@@ -45,23 +49,28 @@ function EditItemWithSection ({values, functions}){
         ...options
       }
       const newTasksItems = tasksInSections.map((elem) => {
-
+        if(elem.folderid == filter){
         if(elem.id == id){
             return newTask
         }
-        return elem
-      })
-      
 
+        return elem
+        }
+      })
+
+ 
       dispatchSections({type: 'UPDATE', payload: {id: sectionid, body: {tasksInSections: newTasksItems}}})
-      setEdit(false)
       const sendTask = {
         ...editValues,
         ...options,
         sectionid: (options.folderid == filter)? options.sectionid : null 
       }
 
-      editTask(sendTask, ()=>{updateAll()})
+      editTask(sendTask, ()=>{
+        updateAll()
+        updateWithout()
+      })
+      setEdit(false)
     }
 
     const deleteItem = () => {
@@ -76,16 +85,32 @@ function EditItemWithSection ({values, functions}){
       const orderString  = newOrder.join("|")
       dispatchSections({type: 'UPDATE', payload: {id: sectionid, body: {tasksInSections: newTasksItems, orders: orderString}}})
       
-      editSection(sectionid, {orders: orderString}, ()=>{updateAll()})
+      editSection(sectionid, {orders: orderString},() => {
+        deleteTask(id,()=>{updateAll()})
+      })
       setEdit(false)
-      
-      deleteTask(id,()=>{})
     }
     
+    const handleAddTag = (newTag) => {
+      const tags  = [...options.myTags, newTag]
+
+      setOptions((prevState) => ({ ...prevState, myTags: tags }));
+    };
+   
 
    
     return (
       <div className="visual-container" data-id={id}>
+
+
+          {recomended ?
+          <Recomended question={editValues.content} inUse={options.myTags} functions={{handleAddTag}}/>
+          :
+          <div
+          onClick={()=>setRecomended(true)}>
+          Recomendar?</div>
+        }
+
             <span className="material-symbols-outlined"
             onClick={()=>{setEdit(false)}}>
             close</span>
@@ -118,11 +143,11 @@ function EditItemWithSection ({values, functions}){
                 setState={setOptions}/>
               
               </div>
-
+              
     
             </div>
 
-             
+            <Tags myTags={options.myTags}></Tags>
 
 
         <GaleryFromTask></GaleryFromTask>
